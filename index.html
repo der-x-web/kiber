@@ -406,7 +406,7 @@ textarea.big{min-height:150px;font-size:11px;font-family:ui-monospace,Menlo,Cons
       <canvas id="canvas3" width="1200" height="1200" hidden></canvas>
       <canvas id="canvas4" width="1200" height="1200" data-v="stats1" hidden></canvas>
     </div>
-    <div class="cap">Превью масштабируется под экран, выгрузка всегда 1200×1200 — как в макете. &nbsp;·&nbsp; сборка <b>20.10 22:12</b></div>
+    <div class="cap">Превью масштабируется под экран, выгрузка всегда 1200×1200 — как в макете. &nbsp;·&nbsp; сборка <b>21.10 02:10</b></div>
   </div>
 </div>
 
@@ -1493,18 +1493,21 @@ if (typeof module !== 'undefined') module.exports = { parseMaps, alignMaps, pret
      Neoris Pro Medium — ники и значения            (stats1: 29 и 73)
    Поля 47, как в match_result, а не 89, как в карточках с цитатой. */
 
+/* Раскладка сверена с эталонной карточкой 1080×1080 и пересчитана на 1200
+   (×1.111): «Кибер» и «CS2» сверху, плашка турнира, затем команды со счётом,
+   две таблицы с полями 71 и BetBoom справа внизу. */
 const ST = {
-  M: 47,                       /* поле кадра, совпадает с рамкой */
-  EVENT: { y: 40, h: 54, r: 5, size: 28, padX: 30 },
-  CREST: { y: 158, s: 140 },
-  SCORE: { y: 158, h: 140, size: 96 },
+  M: 71,                       /* поле контента: гербы, таблицы */
+  EVENT: { y: 116, h: 51, r: 5, size: 26, padX: 26 },
+  CREST: { y: 204, s: 107 },
+  SCORE: { y: 204, h: 107, size: 92 },
   TEAM:  { size: 34 },
-  META:  { y: 330, h: 26, size: 20 },
-  TBL:   { top: 392, bottom: 1066, gap: 22, head: 48, pad: 18,
-           headSize: 21, nickSize: 29, valSize: 29, mini: 28 },
-  COL:   { k: 96, a: 96, d: 96, adr: 132 },
-  FOOT:  { kiber: { x: 47, y: 1115, w: 146.92, h: 30.09 },
-           bb:    { x: 959, y: 1107, w: 194, h: 46 } }
+  META:  { y: 336, h: 26, size: 17 },
+  TBL:   { top: 391, bottom: 1081, gap: 23, head: 49, pad: 21,
+           headSize: 20, labSize: 17, nickSize: 27, valSize: 27, mini: 24 },
+  COL:   { k: 98, a: 98, d: 98, adr: 133 },
+  TOP:   { kiber: { x: 71, y: 60, w: 142, h: 29.1 }, game: { cy: 77, size: 16 } },
+  FOOT:  { bb:    { x: 1006, y: 1112, w: 123, h: 29.2 } }
 };
 
 /* логотип команды: обрезаю прозрачные поля и выравниваю оптический размер,
@@ -1574,18 +1577,28 @@ function renderStats(cv, d, A) {
   roundRect(x, KB.FRAME.x + 1, KB.FRAME.y + 1, KB.FRAME.w - 2, KB.FRAME.h - 2, KB.FRAME.r);
   x.stroke(); x.restore();
 
+  /* ---- верх: «Кибер» слева, дисциплина по центру ---- */
+  if (A.kiber) { const k = ST.TOP.kiber; x.drawImage(A.kiber, k.x, k.y, k.w, k.h); }
+  const game = (d.game || '').trim();
+  if (game) {
+    const gs = ST.TOP.game.size * ts;
+    drawText(x, { text: game, upper: true, x: W / 2 - 150, y: ST.TOP.game.cy - gs, w: 300, h: gs * 2,
+                  size: gs, lh: 1.2, font: 'Text', weight: 700, color: '#9EA0A8', align: 'center',
+                  nowrap: true, tracking: gs * 0.2 });
+  }
+
   /* ---- плашка турнира ---- */
   const ev = (d.event || '').trim();
   if (ev) {
     const e = ST.EVENT, size = e.size * ts;
-    const tw = textWidth(x, { text: ev, upper: true, size: size, font: 'Disp', weight: 700 });
+    const tw = textWidth(x, { text: ev, upper: true, size: size, font: 'Text', weight: 700, tracking: size * 0.05 });
     const w = Math.min(W - M * 2, tw + e.padX * 2), bx = W / 2 - w / 2;
     x.save(); roundRect(x, bx, e.y, w, e.h, e.r); x.clip();
     x.translate(bx, e.y); x.scale(w, e.h);
     x.fillStyle = figGradient(x, KB.ACC_M, KB.ACC_STOPS, w, e.h);
     x.fillRect(0, 0, 1, 1); x.restore();
     drawText(x, { text: ev, upper: true, x: bx, y: e.y, w: w, h: e.h, size: size, lh: 1.2,
-                  font: 'Disp', weight: 700, color: KB.INK, align: 'center', nowrap: true });
+                  font: 'Text', weight: 700, color: KB.INK, align: 'center', nowrap: true, tracking: size * 0.05 });
   }
 
   /* ---- счёт ---- */
@@ -1639,7 +1652,7 @@ function renderStats(cv, d, A) {
   if ((d.round || '').trim()) bits.push('Раунд ' + d.round.trim());
   if (bits.length) {
     drawText(x, { text: bits.join('   /   '), upper: true, x: M, y: ST.META.y, w: W - M * 2, h: ST.META.h,
-                  size: ST.META.size * ts, lh: 1.2, font: 'Text', weight: 500, color: '#9EA0A8',
+                  size: ST.META.size * ts, lh: 1.2, font: 'Text', weight: 700, color: '#8E9098',
                   align: 'center', nowrap: true, tracking: ST.META.size * ts * 0.18 });
   }
 
@@ -1662,11 +1675,13 @@ function renderStats(cv, d, A) {
     if (logo) { drawLogoFit(x, logo, cx + T.mini / 2, top + T.head / 2, T.mini); cx += T.mini + 12; }
     const labelsX = W - M - T.pad - colsW;
     drawText(x, { text: name, upper: true, x: cx, y: top, w: labelsX - cx - 10, h: T.head,
-                  size: T.headSize * ts, lh: 1.2, font: 'Disp', weight: 700, color: KB.INK, nowrap: true });
+                  size: T.headSize * ts, lh: 1.2, font: 'Text', weight: 700, color: KB.INK, nowrap: true,
+                  tracking: T.headSize * ts * 0.05 });
     let lx = labelsX;
     ['K', 'A', 'D', 'ADR'].forEach((lab, i) => {
-      drawText(x, { text: lab, x: lx, y: top, w: cols[i], h: T.head, size: T.headSize * ts, lh: 1.2,
-                    font: 'Disp', weight: 700, color: 'rgba(255,255,255,0.84)', align: 'center', nowrap: true });
+      drawText(x, { text: lab, x: lx, y: top, w: cols[i], h: T.head, size: T.labSize * ts, lh: 1.2,
+                    font: 'Text', weight: 700, color: 'rgba(255,255,255,0.84)', align: 'center', nowrap: true,
+                    tracking: T.labSize * ts * 0.08 });
       lx += cols[i];
     });
 
@@ -1686,11 +1701,11 @@ function renderStats(cv, d, A) {
         x.beginPath(); x.moveTo(M + T.pad, ry + 0.5); x.lineTo(W - M - T.pad, ry + 0.5); x.stroke(); x.restore();
       }
       drawText(x, { text: r.nick, x: M + T.pad + 12, y: ry, w: labelsX - M - T.pad - 22, h: rowH,
-                    size: T.nickSize * ts, lh: 1.2, font: 'Text', weight: 500, color: '#D7D8DE', nowrap: true });
+                    size: T.nickSize * ts, lh: 1.2, font: 'Text', weight: 700, color: '#D4D5DA', nowrap: true });
       let vx = labelsX;
       [r.k, r.a, r.d, r.adr].forEach((v, j) => {
         drawText(x, { text: String(v === undefined ? '' : v), x: vx, y: ry, w: cols[j], h: rowH,
-                      size: T.valSize * ts, lh: 1.2, font: 'Text', weight: 500, color: '#D7D8DE',
+                      size: T.valSize * ts, lh: 1.2, font: 'Text', weight: 700, color: '#D4D5DA',
                       align: 'center', nowrap: true });
         vx += cols[j];
       });
@@ -1699,8 +1714,7 @@ function renderStats(cv, d, A) {
   block(T.top, nmA, A.logoA, d.rowsA);
   block(T.top + blockH + T.gap, nmB, A.logoB, d.rowsB);
 
-  /* ---- знаки внизу, координаты из match_result ---- */
-  if (A.kiber) { const k = ST.FOOT.kiber; x.drawImage(A.kiber, k.x, k.y, k.w, k.h); }
+  /* ---- партнёр внизу справа ---- */
   if (A.bb)    { const b = ST.FOOT.bb;    x.drawImage(A.bb, b.x, b.y, b.w, b.h); }
 }
 
@@ -1791,6 +1805,7 @@ function render(){
       teamA:  nA, teamB: nB,
       scoreA: $('iScoreA').value, scoreB: $('iScoreB').value,
       map:    $('iMap').value, round: $('iRound').value,
+      game:   $('iGame').value.trim() || 'CS2',
       rowsA:  sideRows('a'), rowsB: sideRows('b'),
       tscale: (+$('iTxt').value)/100
     }, Object.assign({}, QA, { logoA: LOGOS.a, logoB: LOGOS.b }));
