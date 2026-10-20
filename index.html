@@ -1613,8 +1613,8 @@ function renderStats(cv, d, A) {
     roundRect(x, bx + 0.5, ST.CREST.y + 0.5, cs - 1, cs - 1, 4); x.stroke();
     x.restore();
   };
-  if (nmA) { crestBox(M); if (A.logoA) drawLogoFit(x, A.logoA, M + cs / 2, cy, cs * 0.62); }
-  if (nmB) { crestBox(W - M - cs); if (A.logoB) drawLogoFit(x, A.logoB, W - M - cs / 2, cy, cs * 0.62); }
+  if (nmA) { crestBox(M); drawLogoMark(x, A.logoA, nmA, M + cs / 2, cy, cs * 0.62); }
+  if (nmB) { crestBox(W - M - cs); drawLogoMark(x, A.logoB, nmB, W - M - cs / 2, cy, cs * 0.62); }
 
   const scSize = ST.SCORE.size * ts;
   const dW = (s) => textWidth(x, { text: s, size: scSize, font: 'Text', weight: 700 });
@@ -1672,7 +1672,7 @@ function renderStats(cv, d, A) {
     x.fillRect(0, 0, 1, 1); x.restore();
 
     let cx = M + T.pad;
-    if (logo) { drawLogoFit(x, logo, cx + T.mini / 2, top + T.head / 2, T.mini); cx += T.mini + 12; }
+    if (logo || name) { drawLogoMark(x, logo, name, cx + T.mini / 2, top + T.head / 2, T.mini, 0.8); cx += T.mini + 12; }
     const labelsX = W - M - T.pad - colsW;
     drawText(x, { text: name, upper: true, x: cx, y: top, w: labelsX - cx - 10, h: T.head,
                   size: T.headSize * ts, lh: 1.2, font: 'Text', weight: 700, color: KB.INK, nowrap: true,
