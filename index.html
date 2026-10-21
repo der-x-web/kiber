@@ -861,8 +861,13 @@ function renderCard(cv, key, data, assets) {
       x.fillStyle = figGradient(x, KB.ACC_M, KB.ACC_STOPS, w, n.h);
       x.fillRect(0, 0, 1, 1);
       x.restore();
-      drawText(x, { text: label, x: bx, y: n.y, w: w, h: n.h, size: n.size * ts, lh: 1.0,
-                    font: 'Disp', weight: 700, color: '#FFFFFF', align: 'center', nowrap: true });
+      /* Центрирую по высоте цифр (прописной), а не по кегельной площадке:
+         у площадки места снизу под выносные больше, чем сверху, и число
+         из-за этого сидит в плашке выше середины. */
+      const nsz = n.size * ts, fc = face({ font: 'Disp', weight: 700 });
+      const capPx = nsz * ((fc && fc.cap) || 700) / 1000;
+      drawText(x, { text: label, x: bx, y: n.y + (n.h - capPx) / 2, w: w, h: capPx, size: nsz, lh: 1.0,
+                    font: 'Disp', weight: 700, color: '#FFFFFF', align: 'center', trim: 'cap', nowrap: true });
     }
   }
 
