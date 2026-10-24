@@ -167,7 +167,7 @@ textarea.big{min-height:150px;font-size:11px;font-family:ui-monospace,Menlo,Cons
         <h4>Партнёр в подвале</h4>
         <label class="chk"><input type="checkbox" id="cPartner" checked> показывать знак партнёра</label>
         <div class="btns">
-          <label class="btn" style="margin:0">Свой знак<input type="file" id="pFile" accept="image/*" style="display:none"></label>
+          <label class="btn" style="margin:0">Свой знак<input type="file" id="partnerFile" accept="image/*" style="display:none"></label>
           <button class="btn" id="pReset" type="button">Вернуть BetBoom</button>
         </div>
       </div>
@@ -2481,7 +2481,7 @@ function hookPlayer(){
   $('bDump').onclick=applyDump;
   $('bPng').onclick=savePng;
 
-  $('pFile').addEventListener('change',e=>{
+  $('partnerFile').addEventListener('change',e=>{
     const f=e.target.files&&e.target.files[0]; if(!f) return;
     const r=new FileReader();
     r.onload=async()=>{
