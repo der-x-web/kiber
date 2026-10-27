@@ -1854,12 +1854,22 @@ function parseDump(txt){
     for(let i=hi-1;i>=0;i--){
       const s=lines[i];
       if(!s||/^[\d:$.,\s%-]+$/.test(s)||isHdr(s)) continue;
+      if(/^op\.?$/i.test(s)||/^duels\b/i.test(s)||/^round over$/i.test(s)) continue;
       name=s; break;
     }
     const players=[];
+    /* Новый вид таблицы HLTV: kills KAST 1vsX K (hs) A (f) D (t) ADR, а перед
+       ними дуэли «1 : 2» и «2+». В скобках — хедшоты, помощь флэшем и трейды;
+       нужны только сами K, A, D и ADR, поэтому беру первое число из каждой пары. */
+    const newFmt=/KAST/i.test(lines[hi])&&/1vsX/i.test(lines[hi]);
     for(let i=hi+1;i<lines.length&&players.length<5;i++){
       const s=lines[i]; if(!s) continue;
       if(isHdr(s)) break;
+      if(newFmt){
+        const m=s.replace(/\s+/g,' ').match(/^(.+?) \d+ ?: ?\d+ \d+ [\d.,]+% \d+ (\d+) ?\(\d+\) (\d+) ?\(\d+\) (\d+) ?\(\d+\) ([\d.,]+)$/);
+        if(m) players.push({nick:m[1],k:m[2],a:m[3],d:m[4],adr:m[5].replace(',','.')});
+        continue;
+      }
       const parts=s.split(/[\s\t]+/).filter(Boolean);
       if(parts.length<cols.length+1) continue;
       const tail=parts.slice(-cols.length);
