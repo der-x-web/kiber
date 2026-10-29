@@ -1444,7 +1444,7 @@ function parseMaps(text) {
     }
     if (!cur) cur = fresh(isMap(ln) ? prettyMap(ln) : '');
     if (mLink) continue;
-    if (isHalf) { cur.halves = ln.replace(/^\(|\)$/g, '').trim(); continue; }
+    if (isHalf) { const g = ln.match(/\(([^)]*)\)/g) || []; cur.halves = g.map(t => t.replace(/[()]/g, '').trim()).join(' · '); continue; }
     if (isScore) { cur.scores.push(/^\d/.test(ln) ? ln : '-'); continue; }
     /* блок уже полный, а строка не счёт и не ссылка — значит началась
        следующая карта, и это её название, даже если я такой карты не знаю */
@@ -1826,8 +1826,24 @@ const isNum=t=>/^-?\d+([.,]\d+)?$/.test(t);
 const isHdr=s=>/(^|[\s$])K([\s]|$)/.test(s)&&/ADR/i.test(s);
 
 function parseDump(txt){
-  const lines=txt.replace(/\r/g,'').split('\n').map(s=>s.replace(/ /g,' ').trim());
+  let lines=txt.replace(/\r/g,'').split('\n').map(s=>s.replace(/ /g,' ').trim());
   const out={round:'',map:'',scores:[],teams:[]};
+
+  /* С телефона «1vsX» копируется с переносом: строка «kills KAST 1», следом
+     «vsX K (hs) A (f) D (t) ADR». Склеиваю их обратно в одну шапку, иначе
+     таблица не находится, а «kills KAST 1» становится названием команды. */
+  {
+    const fixed=[];
+    for(let i=0;i<lines.length;i++){
+      const l=lines[i];
+      if(/\bKAST\b/i.test(l)&&!/vsX/i.test(l)){
+        let j=i+1; while(j<lines.length&&!lines[j]) j++;
+        if(j<lines.length&&/^vsX\b/i.test(lines[j])){ fixed.push(l+lines[j]); i=j; continue; }
+      }
+      fixed.push(l);
+    }
+    lines=fixed;
+  }
 
   for(const l of lines){
     const m=l.match(/^R[:.\s]+(\d+)\s*[-–—]\s*(.+)$/i);
@@ -1862,6 +1878,10 @@ function parseDump(txt){
        ними дуэли «1 : 2» и «2+». В скобках — хедшоты, помощь флэшем и трейды;
        нужны только сами K, A, D и ADR, поэтому беру первое число из каждой пары. */
     const newFmt=/KAST/i.test(lines[hi])&&/1vsX/i.test(lines[hi]);
+    /* С телефона во время карты ник стоит отдельной строкой, а цифры — на
+       следующей: «ryu» и под ним «0  $350  18  2  16  83.2». Запоминаю ник и
+       подставляю его, если в строке с цифрами своего ника нет. */
+    let pendNick='';
     for(let i=hi+1;i<lines.length&&players.length<5;i++){
       const s=lines[i]; if(!s) continue;
       if(isHdr(s)) break;
@@ -1871,14 +1891,18 @@ function parseDump(txt){
         continue;
       }
       const parts=s.split(/[\s\t]+/).filter(Boolean);
-      if(parts.length<cols.length+1) continue;
+      if(parts.length<cols.length+1){
+        if(!/^[\d$.,%\s:-]+$/.test(s)) pendNick=s;
+        continue;
+      }
       const tail=parts.slice(-cols.length);
       const pick=lbl=>{ const j=cols.findIndex(c=>c.toUpperCase().replace(/[^A-Z%]/g,'')===lbl);
                         return j<0?'':String(tail[j]||'').replace(/[^\d.,-]/g,''); };
       const k=pick('K'), a=pick('A'), d=pick('D'), adr=pick('ADR');
       if(!(isNum(k)&&isNum(adr))) continue;
       const nick=parts.slice(0,parts.length-cols.length).filter(t=>!isNum(t)&&!/^\$/.test(t)).join(' ');
-      players.push({nick:nick||parts[0],k:k,a:a,d:d,adr:adr.replace(',','.')});
+      players.push({nick:nick||pendNick||parts[0],k:k,a:a,d:d,adr:adr.replace(',','.')});
+      pendNick='';
     }
     out.teams.push({name:name,players:players});
   });
